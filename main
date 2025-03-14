@@ -5566,7 +5566,7 @@ function MacLib:Window(Settings)
                 local find = preset[v.flag]
         
                 if find then
-                    if type(v.flag) ~= "bool" then
+                    if type(v.flag) ~= "boolean" then
                         find = v.value
 					else
 						find = v.state
