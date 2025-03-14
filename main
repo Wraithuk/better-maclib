@@ -5548,10 +5548,10 @@ function MacLib:Window(Settings)
 
 	function MacLib:LoadConfig(Path)
 
-        local function AutoLoad(file)
+        local function AutoLoad(dcd)
             local HttpService = game:GetService("HttpService")
             local genv = getgenv()
-            local tbl = HttpService:JSONDecode(file)
+            local tbl = dcd
             --genv.Settings = { Fly = {Speed = 12,Toggle = false}, SilentAim = {Fov = 60, Toggle = false}, ESP = {Text = false, Healthbar = false, Box = false, Tracer = false} }
             local preset = {}
             preset["FlySpeed"] = genv.Settings.Fly.Speed
@@ -5566,11 +5566,12 @@ function MacLib:Window(Settings)
                 local find = preset[v.flag]
         
                 if find then
-                    if type(v.value) == "number" then
+                    if type(v.flag) ~= "bool" then
                         find = v.value
-                        continue
+					else
+						find = v.state
                     end
-                    find = v.sate
+                    
                 end
             end
         end
@@ -5596,7 +5597,7 @@ function MacLib:Window(Settings)
 			end
 		end
 
-        AutoLoad(readfile(file));
+        AutoLoad(decoded);
         
 		return true
 	end
