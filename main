@@ -5661,6 +5661,16 @@ function MacLib:LoadAutoLoadConfig()
     end
 end
 
+	function MacLib:SetFolder(Folder)
+		if isStudio then
+			return "Config system unavailable."
+		end
+
+		MacLib.Folder = Folder
+		BuildFolderTree()
+	end
+
+
 function MacLib:SaveConfig(Path)
     if isStudio or not writefile then
         return "Config system unavailable."
