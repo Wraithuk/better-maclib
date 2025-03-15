@@ -5730,16 +5730,18 @@ function MacLib:Window(Settings)
 					if v.flag == "FlySpeed" then
 						genv.Settings.Fly.Speed = v.value
 					else
+						warn("silent aim changing")
 						genv.Settings.SilentAim.Fov = v.value
 					end
 				else
 					if string.find(v.flag, "ESP") then
 						local ac_ind = v.flag:gsub("ESP", "")
+						warn(ac_ind)
 						genv.Settings.ESP[ac_ind] = v.state
 					elseif v.flag == "FlightToggle" then
 						genv.Settings.Fly.Toggle = v.state
 					else
-						genv.Settings.SilentAim.Toggle = v.sate
+						genv.Settings.SilentAim.Toggle = v.state
 					end
 				end
 			end
