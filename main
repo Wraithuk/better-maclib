@@ -5526,258 +5526,206 @@ function MacLib:Window(Settings)
 		return baseUIScale.Scale
 	end
 
-	local ClassParser = {
-		["Toggle"] = {
-			Save = function(Flag, data)
-				return {
-					type = "Toggle",
-					flag = Flag,
-					state = data.State or false,
-				}
-			end,
-			Load = function(Flag, data)
-				if MacLib.Options[Flag] and data.state then
-					MacLib.Options[Flag]:UpdateState(data.state)
-				end
-			end,
-		},
-		["Slider"] = {
-			Save = function(Flag, data)
-				return {
-					type = "Slider",
-					flag = Flag,
-					value = (data.Value and tostring(data.Value)) or false,
-				}
-			end,
-			Load = function(Flag, data)
-				if MacLib.Options[Flag] and data.value then
-					MacLib.Options[Flag]:UpdateValue(data.value)
-				end
-			end,
-		},
-		["Input"] = {
-			Save = function(Flag, data)
-				return {
-					type = "Input",
-					flag = Flag,
-					text = data.Text,
-				}
-			end,
-			Load = function(Flag, data)
-				if MacLib.Options[Flag] and data.text and type(data.text) == "string" then
-					MacLib.Options[Flag]:UpdateText(data.text)
-				end
-			end,
-		},
-		["Keybind"] = {
-			Save = function(Flag, data)
-				return {
-					type = "Keybind",
-					flag = Flag,
-					bind = (typeof(data.Bind) == "EnumItem" and data.Bind.Name) or nil,
-				}
-			end,
-			Load = function(Flag, data)
-				if MacLib.Options[Flag] and data.bind then
-					MacLib.Options[Flag]:Bind(Enum.KeyCode[data.bind])
-				end
-			end,
-		},
-		["Dropdown"] = {
-			Save = function(Flag, data)
-				return {
-					type = "Dropdown",
-					flag = Flag,
-					value = data.Value,
-				}
-			end,
-			Load = function(Flag, data)
-				if MacLib.Options[Flag] and data.value then
-					MacLib.Options[Flag]:UpdateSelection(data.value)
-				end
-			end,
-		},
-		["Colorpicker"] = {
-			Save = function(Flag, data)
-				local function Color3ToHex(color)
-					return string.format(
-						"#%02X%02X%02X",
-						math.floor(color.R * 255),
-						math.floor(color.G * 255),
-						math.floor(color.B * 255)
-					)
-				end
+local ClassParser = {
+    ["Toggle"] = {
+        Save = function(Flag, data)
+            return {
+                type = "Toggle",
+                flag = Flag,
+                state = data.State or false,
+            }
+        end,
+        Load = function(Flag, data)
+            if MacLib.Options[Flag] and data.state then
+                MacLib.Options[Flag]:UpdateState(data.state)
+            end
+        end,
+    },
+    ["Slider"] = {
+        Save = function(Flag, data)
+            return {
+                type = "Slider",
+                flag = Flag,
+                value = (data.Value and tostring(data.Value)) or false,
+            }
+        end,
+        Load = function(Flag, data)
+            if MacLib.Options[Flag] and data.value then
+                -- Convert the string value back to a number
+                local numValue = tonumber(data.value)
+                if numValue then
+                    MacLib.Options[Flag]:UpdateValue(numValue)
+                end
+            end
+        end,
+    },
+    ["Input"] = {
+        Save = function(Flag, data)
+            return {
+                type = "Input",
+                flag = Flag,
+                text = data.Text,
+            }
+        end,
+        Load = function(Flag, data)
+            if MacLib.Options[Flag] and data.text and type(data.text) == "string" then
+                MacLib.Options[Flag]:UpdateText(data.text)
+            end
+        end,
+    },
+    ["Keybind"] = {
+        Save = function(Flag, data)
+            return {
+                type = "Keybind",
+                flag = Flag,
+                bind = (typeof(data.Bind) == "EnumItem" and data.Bind.Name) or nil,
+            }
+        end,
+        Load = function(Flag, data)
+            if MacLib.Options[Flag] and data.bind then
+                MacLib.Options[Flag]:Bind(Enum.KeyCode[data.bind])
+            end
+        end,
+    },
+    ["Dropdown"] = {
+        Save = function(Flag, data)
+            return {
+                type = "Dropdown",
+                flag = Flag,
+                value = data.Value,
+            }
+        end,
+        Load = function(Flag, data)
+            if MacLib.Options[Flag] and data.value then
+                MacLib.Options[Flag]:UpdateSelection(data.value)
+            end
+        end,
+    },
+    ["Colorpicker"] = {
+        Save = function(Flag, data)
+            local function Color3ToHex(color)
+                return string.format(
+                    "#%02X%02X%02X",
+                    math.floor(color.R * 255),
+                    math.floor(color.G * 255),
+                    math.floor(color.B * 255)
+                )
+            end
 
-				return {
-					type = "Colorpicker",
-					flag = Flag,
-					color = Color3ToHex(data.Color) or nil,
-					alpha = data.Alpha,
-				}
-			end,
-			Load = function(Flag, data)
-				local function HexToColor3(hex)
-					local r = tonumber(hex:sub(2, 3), 16) / 255
-					local g = tonumber(hex:sub(4, 5), 16) / 255
-					local b = tonumber(hex:sub(6, 7), 16) / 255
-					return Color3.new(r, g, b)
-				end
+            return {
+                type = "Colorpicker",
+                flag = Flag,
+                color = Color3ToHex(data.Color) or nil,
+                alpha = data.Alpha,
+            }
+        end,
+        Load = function(Flag, data)
+            local function HexToColor3(hex)
+                local r = tonumber(hex:sub(2, 3), 16) / 255
+                local g = tonumber(hex:sub(4, 5), 16) / 255
+                local b = tonumber(hex:sub(6, 7), 16) / 255
+                return Color3.new(r, g, b)
+            end
 
-				if MacLib.Options[Flag] and data.color then
-					MacLib.Options[Flag]:SetColor(HexToColor3(data.color))
-					if data.alpha then
-						MacLib.Options[Flag]:SetAlpha(data.alpha)
-					end
-				end
-			end,
-		},
-	}
+            if MacLib.Options[Flag] and data.color then
+                local color = HexToColor3(data.color)
+                MacLib.Options[Flag]:SetColor(color)
+                if data.alpha then
+                    MacLib.Options[Flag]:SetAlpha(data.alpha)
+                end
+            end
+        end,
+    },
+}
 
-	local function BuildFolderTree()
-		if isStudio or not (isfolder and makefolder) then
-			return "Config system unavailable."
-		end
+function MacLib:LoadAutoLoadConfig()
+    if isStudio or not (isfile and readfile) then
+        return "Config system unavailable."
+    end
 
-		local paths = {
-			MacLib.Folder,
-			MacLib.Folder .. "/settings",
-		}
+    if isfile(MacLib.Folder .. "/settings/autoload.txt") then
+        local name = readfile(MacLib.Folder .. "/settings/autoload.txt")
 
-		for i = 1, #paths do
-			local str = paths[i]
-			if not isfolder(str) then
-				makefolder(str)
-			end
-		end
-	end
+        local suc, err = MacLib:LoadConfig(name)
+        if not suc then
+            WindowFunctions:Notify({
+                Title = "Interface",
+                Description = "Error loading autoload config: " .. err,
+            })
+        end
 
-	function MacLib:LoadAutoLoadConfig()
-		if isStudio or not (isfile and readfile) then
-			return "Config system unavailable."
-		end
+        WindowFunctions:Notify({
+            Title = "Interface",
+            Description = string.format("Autoloaded config: %q", name),
+        })
+    end
+end
 
-		if isfile(MacLib.Folder .. "/settings/autoload.txt") then
-			local name = readfile(MacLib.Folder .. "/settings/autoload.txt")
+function MacLib:SaveConfig(Path)
+    if isStudio or not writefile then
+        return "Config system unavailable."
+    end
 
-			local suc, err = MacLib:LoadConfig(name)
-			if not suc then
-				WindowFunctions:Notify({
-					Title = "Interface",
-					Description = "Error loading autoload config: " .. err,
-				})
-			end
+    if not Path then
+        return false, "Please select a config file."
+    end
 
-			WindowFunctions:Notify({
-				Title = "Interface",
-				Description = string.format("Autoloaded config: %q", name),
-			})
-		end
-	end
+    local fullPath = MacLib.Folder .. "/settings/" .. Path .. ".json"
 
-	function MacLib:SetFolder(Folder)
-		if isStudio then
-			return "Config system unavailable."
-		end
+    local data = {
+        objects = {},
+    }
 
-		MacLib.Folder = Folder
-		BuildFolderTree()
-	end
+    for flag, option in next, MacLib.Options do
+        if not ClassParser[option.Class] then
+            continue
+        end
+        if option.IgnoreConfig then
+            continue
+        end
 
-	function MacLib:SaveConfig(Path)
-		if isStudio or not writefile then
-			return "Config system unavailable."
-		end
+        table.insert(data.objects, ClassParser[option.Class].Save(flag, option))
+    end
 
-		if not Path then
-			return false, "Please select a config file."
-		end
+    local success, encoded = pcall(HttpService.JSONEncode, HttpService, data)
+    if not success then
+        return false, "Unable to encode into JSON data"
+    end
 
-		local fullPath = MacLib.Folder .. "/settings/" .. Path .. ".json"
+    writefile(fullPath, encoded)
+    return true
+end
 
-		local data = {
-			objects = {},
-		}
+function MacLib:LoadConfig(Path)
+    if isStudio or not (isfile and readfile) then
+        return "Config system unavailable."
+    end
 
-		for flag, option in next, MacLib.Options do
-			if not ClassParser[option.Class] then
-				continue
-			end
-			if option.IgnoreConfig then
-				continue
-			end
+    if not Path then
+        return false, "Please select a config file."
+    end
 
-			table.insert(data.objects, ClassParser[option.Class].Save(flag, option))
-		end
+    local file = MacLib.Folder .. "/settings/" .. Path .. ".json"
 
-		local success, encoded = pcall(HttpService.JSONEncode, HttpService, data)
-		if not success then
-			return false, "Unable to encode into JSON data"
-		end
+    if not isfile(file) then
+        return false, "Invalid file"
+    end
 
-		writefile(fullPath, encoded)
-		return true
-	end
+    local success, decoded = pcall(HttpService.JSONDecode, HttpService, readfile(file))
+    if not success then
+        return false, "Unable to decode JSON data."
+    end
 
-	function MacLib:LoadConfig(Path)
-		local function AutoLoad(dcd)
-			local HttpService = game:GetService("HttpService")
-			local genv = getgenv()
-			local tbl = dcd
-			--genv.Settings = { Fly = {Speed = 12,Toggle = false}, SilentAim = {Fov = 60, Toggle = false}, ESP = {Text = false, Healthbar = false, Box = false, Tracer = false} }
+    for _, option in next, decoded.objects do
+        if ClassParser[option.type] then
+            task.spawn(function()
+                ClassParser[option.type].Load(option.flag, option)
+            end)
+        end
+    end
 
-			for i, v in tbl do
-				if type(v.state) ~= "boolean" then --find.value --sliders , find.state --toggles
-					if v.flag == "FlySpeed" then
-						genv.Settings.Fly.Speed = v.value
-					else
-						warn("silent aim changing")
-						genv.Settings.SilentAim.Fov = v.value
-					end
-				else
-					if string.find(v.flag, "ESP") then
-						local ac_ind = v.flag:gsub("ESP", "")
-						warn(ac_ind)
-						genv.Settings.ESP[ac_ind] = v.state
-					elseif v.flag == "FlightToggle" then
-						genv.Settings.Fly.Toggle = v.state
-					else
-						genv.Settings.SilentAim.Toggle = v.state
-					end
-				end
-			end
-		end
-
-		if isStudio or not (isfile and readfile) then
-			return "Config system unavailable."
-		end
-
-		if not Path then
-			return false, "Please select a config file."
-		end
-
-		local file = MacLib.Folder .. "/settings/" .. Path .. ".json"
-
-		if not isfile(file) then
-			return false, "Invalid file"
-		end
-
-		local success, decoded = pcall(HttpService.JSONDecode, HttpService, readfile(file))
-		if not success then
-			return false, "Unable to decode JSON data."
-		end
-
-		for _, option in next, decoded.objects do
-			if ClassParser[option.type] then
-				task.spawn(function()
-					ClassParser[option.type].Load(option.flag, option)
-				end)
-			end
-		end
-
-		AutoLoad(decoded)
-
-		return true
-	end
+    return true
+end
 
 	function MacLib:RefreshConfigList()
 		if isStudio or not (isfolder and listfiles) then
@@ -5825,269 +5773,6 @@ function MacLib:Window(Settings)
 	windowState = true
 
 	return WindowFunctions
-end
-
-function MacLib:Demo()
-	local Window = MacLib:Window({
-		Title = "Maclib Demo",
-		Subtitle = "This is a subtitle.",
-		Size = UDim2.fromOffset(868, 650),
-		DragStyle = 1,
-		DisabledWindowControls = {},
-		ShowUserInfo = true,
-		Keybind = Enum.KeyCode.RightControl,
-		AcrylicBlur = true,
-	})
-
-	local globalSettings = {
-		UIBlurToggle = Window:GlobalSetting({
-			Name = "UI Blur",
-			Default = Window:GetAcrylicBlurState(),
-			Callback = function(bool)
-				Window:SetAcrylicBlurState(bool)
-				Window:Notify({
-					Title = Window.Settings.Title,
-					Description = (bool and "Enabled" or "Disabled") .. " UI Blur",
-					Lifetime = 5,
-				})
-			end,
-		}),
-		NotificationToggler = Window:GlobalSetting({
-			Name = "Notifications",
-			Default = Window:GetNotificationsState(),
-			Callback = function(bool)
-				Window:SetNotificationsState(bool)
-				Window:Notify({
-					Title = Window.Settings.Title,
-					Description = (bool and "Enabled" or "Disabled") .. " Notifications",
-					Lifetime = 5,
-				})
-			end,
-		}),
-		ShowUserInfo = Window:GlobalSetting({
-			Name = "Show User Info",
-			Default = Window:GetUserInfoState(),
-			Callback = function(bool)
-				Window:SetUserInfoState(bool)
-				Window:Notify({
-					Title = Window.Settings.Title,
-					Description = (bool and "Showing" or "Redacted") .. " User Info",
-					Lifetime = 5,
-				})
-			end,
-		}),
-	}
-
-	local tabGroups = {
-		TabGroup1 = Window:TabGroup(),
-	}
-
-	local tabs = {
-		Main = tabGroups.TabGroup1:Tab({ Name = "Demo", Image = "rbxassetid://18821914323" }),
-		Settings = tabGroups.TabGroup1:Tab({ Name = "Settings", Image = "rbxassetid://10734950309" }),
-	}
-
-	local sections = {
-		MainSection1 = tabs.Main:Section({ Side = "Left" }),
-	}
-
-	sections.MainSection1:Header({
-		Name = "Header #1",
-	})
-
-	sections.MainSection1:Button({
-		Name = "Button",
-		Callback = function()
-			Window:Dialog({
-				Title = Window.Settings.Title,
-				Description = "Lorem ipsum odor amet, consectetuer adipiscing elit. Eros vestibulum aliquet mattis, ex platea nunc.",
-				Buttons = {
-					{
-						Name = "Confirm",
-						Callback = function()
-							print("Confirmed!")
-						end,
-					},
-					{
-						Name = "Cancel",
-					},
-				},
-			})
-		end,
-	})
-
-	sections.MainSection1:Input({
-		Name = "Input",
-		Placeholder = "Input",
-		AcceptedCharacters = "All",
-		Callback = function(input)
-			Window:Notify({
-				Title = Window.Settings.Title,
-				Description = "Successfully set input to " .. input,
-			})
-		end,
-		onChanged = function(input)
-			print("Input is now " .. input)
-		end,
-	}, "Input")
-
-	sections.MainSection1:Slider({
-		Name = "Slider",
-		Default = 50,
-		Minimum = 0,
-		Maximum = 100,
-		DisplayMethod = "Percent",
-		Precision = 0,
-		Callback = function(Value)
-			print("Changed to " .. Value)
-		end,
-	}, "Slider")
-
-	sections.MainSection1:Toggle({
-		Name = "Toggle",
-		Default = false,
-		Callback = function(value)
-			Window:Notify({
-				Title = Window.Settings.Title,
-				Description = (value and "Enabled " or "Disabled ") .. "Toggle",
-			})
-		end,
-	}, "Toggle")
-
-	sections.MainSection1:Keybind({
-		Name = "Keybind",
-		Blacklist = false,
-		Callback = function(binded)
-			Window:Notify({
-				Title = "Demo Window",
-				Description = "Pressed keybind - " .. tostring(binded.Name),
-				Lifetime = 3,
-			})
-		end,
-		onBinded = function(bind)
-			Window:Notify({
-				Title = "Demo Window",
-				Description = "Successfully Binded Keybind to - " .. tostring(bind.Name),
-				Lifetime = 3,
-			})
-		end,
-	}, "Keybind")
-
-	sections.MainSection1:Colorpicker({
-		Name = "Colorpicker",
-		Default = Color3.fromRGB(0, 255, 255),
-		Callback = function(color)
-			print("Color: ", color)
-		end,
-	}, "Colorpicker")
-
-	local alphaColorPicker = sections.MainSection1:Colorpicker({
-		Name = "Transparency Colorpicker",
-		Default = Color3.fromRGB(255, 0, 0),
-		Alpha = 0,
-		Callback = function(color, alpha)
-			print("Color: ", color, " Alpha: ", alpha)
-		end,
-	}, "TransparencyColorpicker")
-
-	local rainbowActive
-	local rainbowConnection
-	local hue = 0
-
-	sections.MainSection1:Toggle({
-		Name = "Rainbow",
-		Default = false,
-		Callback = function(value)
-			rainbowActive = value
-
-			if rainbowActive then
-				rainbowConnection = game:GetService("RunService").RenderStepped:Connect(function(deltaTime)
-					hue = (hue + deltaTime * 0.1) % 1
-					alphaColorPicker:SetColor(Color3.fromHSV(hue, 1, 1))
-				end)
-			elseif rainbowConnection then
-				rainbowConnection:Disconnect()
-				rainbowConnection = nil
-			end
-		end,
-	}, "RainbowToggle")
-
-	local optionTable = {
-		"Apple",
-		"Banana",
-		"Orange",
-		"Grapes",
-		"Pineapple",
-		"Mango",
-		"Strawberry",
-		"Blueberry",
-		"Watermelon",
-		"Peach",
-	}
-
-	local Dropdown = sections.MainSection1:Dropdown({
-		Name = "Dropdown",
-		Multi = false,
-		Required = true,
-		Options = optionTable,
-		Default = 1,
-		Callback = function(Value)
-			print("Dropdown changed: " .. Value)
-		end,
-	}, "Dropdown")
-
-	local MultiDropdown = sections.MainSection1:Dropdown({
-		Name = "Multi Dropdown",
-		Search = true,
-		Multi = true,
-		Required = false,
-		Options = optionTable,
-		Default = { "Apple", "Orange" },
-		Callback = function(Value)
-			local Values = {}
-			for Value, State in next, Value do
-				table.insert(Values, Value)
-			end
-			print("Mutlidropdown changed:", table.concat(Values, ", "))
-		end,
-	}, "MultiDropdown")
-
-	sections.MainSection1:Button({
-		Name = "Update Selection",
-		Callback = function()
-			Dropdown:UpdateSelection("Grapes")
-			MultiDropdown:UpdateSelection({ "Banana", "Pineapple" })
-		end,
-	})
-
-	sections.MainSection1:Divider()
-
-	sections.MainSection1:Header({
-		Text = "Header #2",
-	})
-
-	sections.MainSection1:Paragraph({
-		Header = "Paragraph",
-		Body = "Paragraph body. Lorem ipsum odor amet, consectetuer adipiscing elit. Morbi tempus netus aliquet per velit est gravida.",
-	})
-
-	sections.MainSection1:Label({
-		Text = "Label. Lorem ipsum odor amet, consectetuer adipiscing elit.",
-	})
-
-	sections.MainSection1:SubLabel({
-		Text = "Sub-Label. Lorem ipsum odor amet, consectetuer adipiscing elit.",
-	})
-
-	MacLib:SetFolder("Maclib")
-	tabs.Settings:InsertConfigSection("Left")
-
-	Window.onUnloaded(function()
-		print("Unloaded!")
-	end)
-
-	tabs.Main:Select()
-	MacLib:LoadAutoLoadConfig()
 end
 
 return MacLib
